@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>John's marvellous Christmas picker</title>
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Caveat+Brush&family=Figtree:wght@400;600;700&display=swap">
+<style>
+  /* Layout: one phone-width column. The wheel is the hero, the secret-code gate sits under it,
+     and the result arrives as a handwritten gift tag. One festive look in both themes. */
+  :root {
+    --pine: #0e2a21;
+    --pine-raised: #17392d;
+    --holly: #1f7a54;
+    --berry: #cf3a2b;
+    --berry-deep: #8f2118;
+    --cream: #f7ecd6;
+    --gold: #e6b450;
+    --ink: #0b1f18;
+    --muted: #a9c2b4;
+    --line: rgba(247, 236, 214, 0.28);
+    --shadow: rgba(0, 0, 0, 0.45);
+    --font-display: "Bagel Fat One", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+    --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-hand: "Caveat Brush", "Bradley Hand", "Segoe Print", cursive;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--pine);
+    background-image: radial-gradient(120% 60% at 50% 0%, var(--pine-raised) 0%, var(--pine) 70%);
+    background-repeat: no-repeat;
+    color: var(--cream);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    padding-inline: 16px;
+    padding-block: 28px 40px;
+    overflow-x: clip;
+  }
+
+  .sky, .confetti {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .sky { z-index: 0; }
+  .confetti { z-index: 5; }
+
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 440px;
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    text-align: center;
+  }
+
+  .masthead { display: grid; gap: 10px; justify-items: center; }
+  .eyebrow {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+  h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: clamp(2rem, 9.6vw, 2.9rem);
+    line-height: 1;
+    color: var(--cream);
+    text-shadow: 0 3px 0 var(--berry-deep);
+    text-wrap: balance;
+  }
+
+  /* ---------- Wheel ---------- */
+  .wheel {
+    position: relative;
+    width: min(100%, 380px);
+    max-width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 0 4px var(--berry-deep), 0 18px 40px var(--shadow);
+  }
+  .rim {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .bulb {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transform: rotate(var(--a));
+  }
+  .bulb::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    margin-left: -4px;
+    border-radius: 50%;
+    background: var(--cream);
+    box-shadow: 0 0 6px var(--cream);
+    animation: twinkle 1.4s ease-in-out infinite;
+  }
+  .bulb:nth-child(even)::before { animation-delay: 0.7s; }
+  .wheel.is-spinning .bulb::before { animation-duration: 0.35s; }
+  @keyframes twinkle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+
+  .disc {
+    position: absolute;
+    inset: 14px;
+    width: calc(100% - 28px);
+    height: calc(100% - 28px);
+    border-radius: 50%;
+    will-change: transform;
+  }
+
+  .pointer {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    width: 34px;
+    height: 42px;
+    transform: translateX(-50%);
+    transform-origin: 50% 20%;
+    background: var(--berry-deep);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    filter: drop-shadow(0 3px 3px var(--shadow));
+    z-index: 2;
+  }
+  .pointer::after {
+    content: "";
+    position: absolute;
+    inset: 3px 5px 8px;
+    background: var(--cream);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+  }
+
+  .hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 27%;
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 4px solid var(--gold);
+    background: var(--berry);
+    color: var(--cream);
+    font-family: var(--font-display);
+    font-size: clamp(1rem, 5.4vw, 1.45rem);
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    box-shadow: 0 4px 0 var(--berry-deep), 0 8px 16px var(--shadow);
+    z-index: 3;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .hub.is-ready { animation: beckon 1.3s ease-in-out infinite; }
+  .hub[aria-disabled="true"] { cursor: default; }
+  @keyframes beckon {
+    0%, 100% { box-shadow: 0 4px 0 var(--berry-deep), 0 0 0 0 rgba(247, 236, 214, 0.55); }
+    50% { box-shadow: 0 4px 0 var(--berry-deep), 0 0 0 14px rgba(247, 236, 214, 0); }
+  }
+
+  .status {
+    margin: 0;
+    min-height: 1.5em;
+    font-weight: 600;
+    color: var(--cream);
+    text-wrap: balance;
+  }
+
+  /* ---------- Panels under the wheel ---------- */
+  .panel { width: 100%; display: grid; gap: 14px; justify-items: center; }
+  h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 1.5rem;
+    line-height: 1.1;
+    color: var(--gold);
+    text-wrap: balance;
+  }
+  .panel-note { margin: 0; max-width: 34ch; color: var(--muted); font-size: 0.95rem; }
+  .panel-lead { margin: 0; font-size: 1.15rem; font-weight: 600; }
+
+  .code-form { width: min(100%, 320px); display: grid; gap: 12px; }
+  .code-input {
+    width: 100%;
+    min-height: 56px;
+    padding: 8px 14px;
+    border: 3px solid var(--gold);
+    border-radius: 12px;
+    background: var(--cream);
+    color: var(--ink);
+    font: 700 1.25rem var(--font-body);
+    letter-spacing: 0.12em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .code-input::placeholder { color: var(--holly); opacity: 0.75; letter-spacing: 0.04em; text-transform: none; font-weight: 600; }
+  .code-error { margin: 0; color: var(--gold); font-weight: 600; font-size: 0.95rem; }
+  .gate.nudge .code-form { animation: shake 0.4s; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-7px); }
+    75% { transform: translateX(7px); }
+  }
+
+  /* ---------- Result tag ---------- */
+  .tag-wrap {
+    width: min(100%, 340px);
+    filter: drop-shadow(0 10px 16px var(--shadow));
+    transform: rotate(-3deg);
+    transform-origin: 8% 50%;
+    animation: swing 0.9s cubic-bezier(0.3, 1.5, 0.5, 1);
+  }
+  @keyframes swing {
+    from { transform: rotate(-16deg); }
+    to { transform: rotate(-3deg); }
+  }
+  .tag {
+    position: relative;
+    display: grid;
+    gap: 2px;
+    align-content: center;
+    min-height: 150px;
+    padding: 20px 22px 20px 25%;
+    background: var(--cream);
+    color: var(--ink);
+    clip-path: polygon(15% 0, 100% 0, 100% 100%, 15% 100%, 0 50%);
+    text-align: left;
+  }
+  .tag::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 8%;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+    border-radius: 50%;
+    background: var(--pine);
+    box-shadow: 0 0 0 4px var(--gold);
+  }
+  .tag-to, .tag-from {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--berry-deep);
+  }
+  .tag-name {
+    font-family: var(--font-hand);
+    font-size: clamp(2.4rem, 13vw, 3.4rem);
+    line-height: 1;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+
+  .btn {
+    min-height: 52px;
+    padding: 10px 24px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--berry);
+    color: var(--cream);
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    box-shadow: 0 4px 0 var(--berry-deep);
+  }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--berry-deep); }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+
+  .ghost {
+    min-height: 40px;
+    padding: 6px 16px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    font: 600 0.88rem var(--font-body);
+    cursor: pointer;
+  }
+
+  /* ---------- Footer ---------- */
+  .foot {
+    display: grid;
+    gap: 12px;
+    justify-items: center;
+    padding-top: 6px;
+    border-top: 1px solid var(--line);
+    width: 100%;
+  }
+  .foot p { margin: 12px 0 0; max-width: 38ch; color: var(--muted); font-size: 0.9rem; }
+
+  :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bulb::before, .hub.is-ready, .tag-wrap, .gate.nudge .code-form { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas class="sky" id="sky" aria-hidden="true"></canvas>
+
+<main class="page">
+  <header class="masthead">
+    <p class="eyebrow">Secret Santa &middot; Christmas 2026</p>
+    <h1>John's marvellous Christmas picker</h1>
+  </header>
+
+  <div class="wheel" id="wheel">
+    <div class="rim" id="rim" aria-hidden="true"></div>
+    <canvas class="disc" id="disc" role="img" aria-label="Spinning wheel of family names"></canvas>
+    <div class="pointer" id="pointer" aria-hidden="true"></div>
+    <button class="hub" id="spin" type="button" aria-disabled="true">SPIN</button>
+  </div>
+
+  <p class="status" id="status" aria-live="polite">Enter your secret code to unlock your spin.</p>
+
+  <!-- Locked: waiting for a code -->
+  <section class="panel gate" id="gate" aria-labelledby="gate-title">
+    <h2 id="gate-title">Got your secret code?</h2>
+    <p class="panel-note">John has sent you one privately. It unlocks your spin and nobody else's.</p>
+    <form class="code-form" id="code-form" novalidate>
+      <label class="sr" for="code">Secret code</label>
+      <input class="code-input" id="code" name="code" type="text" placeholder="Your code" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" maxlength="24">
+      <button class="btn" id="unlock" type="submit">Unlock my spin</button>
+    </form>
+    <p class="code-error" id="code-error" role="alert" hidden></p>
+  </section>
+
+  <!-- Unlocked, not yet spun -->
+  <section class="panel" id="ready" hidden>
+    <p class="panel-lead">You're in, <span id="ready-name"></span>.</p>
+    <p class="panel-note">You get one spin. Make sure nobody is looking over your shoulder.</p>
+    <button class="ghost" id="not-me" type="button">Not you? Use a different code</button>
+  </section>
+
+  <!-- Just spun, or peeking -->
+  <section class="panel" id="result" hidden aria-labelledby="result-lead">
+    <p class="panel-lead" id="result-lead" tabindex="-1"><span id="who"></span>, you're buying for</p>
+    <div class="tag-wrap">
+      <div class="tag">
+        <span class="tag-to">To</span>
+        <span class="tag-name" id="recipient"></span>
+        <span class="tag-from">From your Secret Santa</span>
+      </div>
+    </div>
+    <p class="panel-note">Not a word to anyone. You can peek again later with your code.</p>
+    <button class="btn" id="hide" type="button">Hide it</button>
+  </section>
+
+  <!-- Already spun, tag tucked away -->
+  <section class="panel" id="done" hidden aria-labelledby="done-title">
+    <h2 id="done-title"><span id="done-name"></span>, you've had your spin</h2>
+    <p class="panel-note">One spin each. Your tag is tucked away until you want another look.</p>
+    <button class="btn" id="peek" type="button">Peek at my tag</button>
+    <button class="ghost" id="someone-else" type="button">Someone else on this phone?</button>
+  </section>
+
+  <footer class="foot">
+    <p>One code, one spin, one name each. Nobody gets themselves, and nobody is picked twice.</p>
+    <button class="ghost" id="sound" type="button" aria-pressed="true">Sound: on</button>
+  </footer>
+</main>
+
+<canvas class="confetti" id="confetti" aria-hidden="true"></canvas>
+
+<script>
+(function () {
+  "use strict";
+
+  /* The draw is sealed: each person's result can only be opened with their own code.
+     Regenerate this block to redraw or change the names. */
+  var DATA = {"names":["Alison","Sam","Beth","Ellie","John"],"salt":"39ff6dc89ba3","recs":[{"h":"1ubob2th5y1","w":"bc17f078c9c948716bd83e61c195","t":"f7e83afb13f901b32f22a55ba545"},{"h":"1y3a1e85y5m","w":"8201afad1326992e6c2a7833bb06","t":"415e69347ecc291f8ac3f8f1ff1e"},{"h":"2a966auu8re","w":"518f56d09500e780118619efbecc","t":"424ca834b1655b5604c989045b55"},{"h":"herzavn7ia","w":"0f64937f8f849000d1fe0df7bbc1","t":"9061a09279d4bcb79800dfc9ecbe"},{"h":"smk3c8wwmh","w":"5a21aac89b5adce8071affb96b42","t":"1b9fa067ae1de2057028191fb964"}]};
+
+  var STORE_KEY = "jmcp-2026";
+  var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var $ = function (id) { return document.getElementById(id); };
+  var wheelEl = $("wheel"), disc = $("disc"), pointer = $("pointer"), hub = $("spin");
+  var statusEl = $("status"), gate = $("gate"), codeInput = $("code"), codeError = $("code-error");
+  var soundBtn = $("sound");
+  var views = { locked: gate, ready: $("ready"), revealed: $("result"), done: $("done") };
+
+  /* ---------- sealed draw ---------- */
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function cyrb53(str, seed) {
+    var h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+    for (var i = 0; i < str.length; i++) {
+      var ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+  }
+  function normalise(raw) { return String(raw || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+  function unseal(hex, key, lane) {
+    var rnd = mulberry32(((key >>> 0) ^ Math.imul(lane + 1, 0x9E3779B9)) | 0);
+    var out = "";
+    for (var i = 0; i < hex.length / 2; i++) {
+      var byte = parseInt(hex.substr(i * 2, 2), 16) ^ Math.floor(rnd() * 256);
+      if (byte) out += String.fromCharCode(byte);
+    }
+    return out;
+  }
+  function unlock(raw) {
+    var code = normalise(raw);
+    if (!code) return null;
+    var id = cyrb53(DATA.salt + code, 1).toString(36);
+    var rec = null;
+    for (var i = 0; i < DATA.recs.length; i++) if (DATA.recs[i].h === id) rec = DATA.recs[i];
+    if (!rec) return null;
+    var key = cyrb53(code + DATA.salt, 2);
+    var me = unseal(rec.w, key, 0), to = unseal(rec.t, key, 1);
+    if (DATA.names.indexOf(me) < 0 || DATA.names.indexOf(to) < 0) return null;
+    return { id: id, code: code, me: me, to: to };
+  }
+
+  /* ---------- this phone's memory ---------- */
+  var store = { code: null, spun: {} };
+  try {
+    var saved = JSON.parse(localStorage.getItem(STORE_KEY));
+    if (saved && typeof saved === "object") {
+      store.code = typeof saved.code === "string" ? saved.code : null;
+      store.spun = saved.spun && typeof saved.spun === "object" ? saved.spun : {};
+    }
+  } catch (e) {}
+  function persist() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
+  }
+
+  var names = DATA.names.slice();
+  var session = null;
+  var currentList = names.slice();
+  var rotation = 0;
+  var spinning = false;
+  var view = "locked";
+
+  /* ---------- static bits ---------- */
+  for (var b = 0; b < 16; b++) {
+    var bulb = document.createElement("i");
+    bulb.className = "bulb";
+    bulb.style.setProperty("--a", (b * 22.5) + "deg");
+    $("rim").appendChild(bulb);
+  }
+
+  /* ---------- wheel drawing ---------- */
+  function token(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  function drawWheel() {
+    var list = currentList;
+    var size = disc.clientWidth;
+    if (!size) return;
+    var dpr = Math.min(window.devicePixelRatio || 1, 3);
+    disc.width = disc.height = Math.round(size * dpr);
+    var ctx = disc.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var r = size / 2;
+    ctx.translate(r, r);
+
+    var fills = [token("--berry"), token("--cream"), token("--holly")];
+    var inks = [token("--cream"), token("--ink"), token("--cream")];
+    var gold = token("--gold");
+    var family = token("--font-display");
+    var n = list.length;
+    var seg = (Math.PI * 2) / n;
+
+    for (var i = 0; i < n; i++) {
+      var c = i % 3;
+      if (i === n - 1 && c === 0 && n > 1) c = 1; // keep the last slice different from the first
+      var start = -Math.PI / 2 + i * seg;
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, r, start, start + seg);
+      ctx.closePath();
+      ctx.fillStyle = fills[c];
+      ctx.fill();
+      ctx.strokeStyle = gold;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.save();
+      ctx.rotate(start + seg / 2);
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      var maxLen = r * 0.56;
+      var maxH = n > 1 ? 2 * r * 0.62 * Math.sin(seg / 2) * 0.62 : r * 0.2;
+      var fs = Math.max(10, Math.min(r * 0.17, maxH));
+      ctx.font = "400 " + fs + "px " + family;
+      var w = ctx.measureText(list[i]).width;
+      if (w > maxLen) {
+        fs = Math.max(9, fs * maxLen / w);
+        ctx.font = "400 " + fs + "px " + family;
+      }
+      ctx.fillStyle = inks[c];
+      ctx.fillText(list[i], r * 0.92, 0);
+      ctx.restore();
+    }
+  }
+
+  function applyRotation() {
+    disc.style.transform = "rotate(" + rotation + "deg)";
+  }
+
+  function showWheel(list, deg) {
+    currentList = list;
+    rotation = deg;
+    applyRotation();
+    drawWheel();
+  }
+
+  function others() {
+    return names.filter(function (n) { return n !== session.me; });
+  }
+
+  /* ---------- sound ---------- */
+  var soundOn = true;
+  try { if (localStorage.getItem("santa-sound") === "off") soundOn = false; } catch (e) {}
+  var ac = null;
+  function paintSound() {
+    soundBtn.textContent = "Sound: " + (soundOn ? "on" : "off");
+    soundBtn.setAttribute("aria-pressed", soundOn ? "true" : "false");
+  }
+  paintSound();
+  soundBtn.addEventListener("click", function () {
+    soundOn = !soundOn;
+    paintSound();
+    try { localStorage.setItem("santa-sound", soundOn ? "on" : "off"); } catch (e) {}
+  });
+
+  function wakeAudio() {
+    if (!soundOn) return;
+    try {
+      if (!ac) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) ac = new AC();
+      }
+      if (ac && ac.state === "suspended") ac.resume();
+    } catch (e) { ac = null; }
+  }
+
+  function blip(freq, when, length, type, gain) {
+    if (!soundOn || !ac) return;
+    try {
+      var t = ac.currentTime + when;
+      var o = ac.createOscillator();
+      var g = ac.createGain();
+      o.type = type;
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(gain, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + length);
+      o.connect(g);
+      g.connect(ac.destination);
+      o.start(t);
+      o.stop(t + length + 0.02);
+    } catch (e) {}
+  }
+
+  var lastTick = 0;
+  function tick(now) {
+    if (now - lastTick < 45) return;
+    lastTick = now;
+    blip(880 + Math.random() * 220, 0, 0.05, "triangle", 0.09);
+    if (!reduce && pointer.animate) {
+      pointer.animate(
+        [{ transform: "translateX(-50%) rotate(-16deg)" }, { transform: "translateX(-50%) rotate(0deg)" }],
+        { duration: 110, easing: "ease-out" }
+      );
+    }
+  }
+
+  function chime() {
+    [659.25, 783.99, 987.77, 1318.5].forEach(function (f, i) {
+      blip(f, i * 0.11, 0.7, "sine", 0.14);
+    });
+  }
+
+  /* ---------- views ---------- */
+  function setStatus(text) { statusEl.textContent = text; }
+
+  function setView(next) {
+    view = next;
+    Object.keys(views).forEach(function (k) { views[k].hidden = k !== next; });
+    var canSpin = next === "ready";
+    hub.classList.toggle("is-ready", canSpin);
+    hub.setAttribute("aria-disabled", canSpin ? "false" : "true");
+  }
+
+  function toTop() {
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  }
+
+  function enterLocked() {
+    session = null;
+    showWheel(names.slice(), 0);
+    setView("locked");
+    setStatus("Enter your secret code to unlock your spin.");
+  }
+
+  function enterReady() {
+    showWheel(others(), 0);
+    $("ready-name").textContent = session.me;
+    setView("ready");
+    setStatus("Ready, " + session.me + ". Hit SPIN.");
+  }
+
+  function enterDone() {
+    // Reset the wheel so it gives nothing away while the tag is hidden.
+    showWheel(names.slice(), 0);
+    $("who").textContent = "";
+    $("recipient").textContent = "";
+    $("done-name").textContent = session.me;
+    setView("done");
+    setStatus("Your spin is done. No peeking at anyone else's.");
+  }
+
+  function enterRevealed() {
+    $("who").textContent = session.me;
+    $("recipient").textContent = session.to;
+    setView("revealed");
+    setStatus("The wheel has spoken.");
+    try { $("result-lead").focus({ preventScroll: true }); } catch (e) {}
+    views.revealed.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
+  }
+
+  function forgetPerson() {
+    store.code = null;
+    persist();
+    codeInput.value = "";
+    codeError.hidden = true;
+    enterLocked();
+    toTop();
+  }
+
+  /* ---------- code gate ---------- */
+  var misses = 0;
+  var lockedUntil = 0;
+  function nudgeGate(message) {
+    codeError.textContent = message;
+    codeError.hidden = false;
+    gate.classList.remove("nudge");
+    void gate.offsetWidth;
+    gate.classList.add("nudge");
+  }
+
+  $("code-form").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var now = Date.now();
+    if (now < lockedUntil) {
+      nudgeGate("Too many tries. Have a mince pie and try again in " + Math.ceil((lockedUntil - now) / 1000) + " seconds.");
+      return;
+    }
+    if (!normalise(codeInput.value)) { nudgeGate("Type the code John sent you."); return; }
+    var found = unlock(codeInput.value);
+    if (!found) {
+      misses++;
+      if (misses >= 4) {
+        misses = 0;
+        lockedUntil = now + 30000;
+        nudgeGate("Too many tries. Have a mince pie and try again in 30 seconds.");
+      } else {
+        nudgeGate("That code isn't right. Check the message John sent you.");
+      }
+      return;
+    }
+    misses = 0;
+    codeError.hidden = true;
+    codeInput.value = "";
+    codeInput.blur();
+    session = found;
+    store.code = found.code;
+    persist();
+    if (store.spun[found.id]) enterDone(); else enterReady();
+    toTop();
+  });
+
+  /* ---------- spin ---------- */
+  function spin() {
+    if (spinning) return;
+    if (view === "locked") {
+      setStatus("Enter your secret code first.");
+      nudgeGate("Enter your code to unlock the wheel.");
+      return;
+    }
+    if (view === "done") { setStatus("You've had your spin, " + session.me + "."); return; }
+    if (view !== "ready") return;
+    wakeAudio();
+
+    var list = currentList;
+    var idx = list.indexOf(session.to);
+    var segDeg = 360 / list.length;
+    var centre = (idx + 0.5) * segDeg;
+    var jitter = (Math.random() - 0.5) * segDeg * 0.6;
+    var want = (((360 - centre + jitter) % 360) + 360) % 360;
+    var from = rotation;
+    var cur = ((from % 360) + 360) % 360;
+    var delta = (((want - cur) % 360) + 360) % 360 + 360 * (reduce ? 1 : 6);
+    var dur = reduce ? 1400 : 5600;
+    var startAt = performance.now();
+    var lastIdx = -1;
+
+    spinning = true;
+    hub.classList.remove("is-ready");
+    $("not-me").disabled = true;
+    wheelEl.classList.add("is-spinning");
+    setStatus("Round it goes…");
+
+    function frame(now) {
+      var t = Math.min(1, (now - startAt) / dur);
+      var eased = 1 - Math.pow(1 - t, 4);
+      rotation = from + delta * eased;
+      applyRotation();
+      var under = Math.floor(((360 - (rotation % 360)) % 360) / segDeg);
+      if (under !== lastIdx) {
+        if (lastIdx !== -1) tick(now);
+        lastIdx = under;
+      }
+      if (t < 1) requestAnimationFrame(frame);
+      else finish();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function finish() {
+    spinning = false;
+    $("not-me").disabled = false;
+    wheelEl.classList.remove("is-spinning");
+    store.spun[session.id] = true;
+    persist();
+    enterRevealed();
+    chime();
+    burst();
+  }
+
+  function peek() {
+    // Show the wheel resting on their person, without another spin.
+    var list = others();
+    var segDeg = 360 / list.length;
+    showWheel(list, 360 - (list.indexOf(session.to) + 0.5) * segDeg);
+    enterRevealed();
+  }
+
+  hub.addEventListener("click", spin);
+  $("hide").addEventListener("click", function () { enterDone(); toTop(); });
+  $("peek").addEventListener("click", peek);
+  $("not-me").addEventListener("click", forgetPerson);
+  $("someone-else").addEventListener("click", forgetPerson);
+
+  /* ---------- snow ---------- */
+  var sky = $("sky");
+  var flakes = [];
+  var skyW = 0, skyH = 0;
+  function sizeCanvas(c) {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    c.width = Math.round(window.innerWidth * dpr);
+    c.height = Math.round(window.innerHeight * dpr);
+    c.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function seedSnow() {
+    sizeCanvas(sky);
+    skyW = window.innerWidth; skyH = window.innerHeight;
+    flakes = [];
+    for (var i = 0; i < 38; i++) {
+      flakes.push({
+        x: Math.random() * skyW, y: Math.random() * skyH,
+        r: 1 + Math.random() * 2.2, v: 0.25 + Math.random() * 0.6,
+        drift: Math.random() * Math.PI * 2
+      });
+    }
+  }
+  function paintSnow(move) {
+    var ctx = sky.getContext("2d");
+    ctx.clearRect(0, 0, skyW, skyH);
+    ctx.fillStyle = token("--cream");
+    flakes.forEach(function (f) {
+      if (move) {
+        f.y += f.v;
+        f.drift += 0.01;
+        f.x += Math.sin(f.drift) * 0.3;
+        if (f.y > skyH + 4) { f.y = -4; f.x = Math.random() * skyW; }
+      }
+      ctx.globalAlpha = 0.18 + f.r * 0.12;
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
+  function snowLoop() {
+    if (!document.hidden) paintSnow(true);
+    requestAnimationFrame(snowLoop);
+  }
+
+  /* ---------- confetti ---------- */
+  var conf = $("confetti");
+  var bits = [];
+  var confRunning = false;
+  function burst() {
+    if (reduce) return;
+    sizeCanvas(conf);
+    var colours = [token("--berry"), token("--cream"), token("--gold"), token("--holly")];
+    var w = window.innerWidth, h = window.innerHeight;
+    for (var i = 0; i < 130; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 3 + Math.random() * 8;
+      bits.push({
+        x: w / 2, y: h * 0.4,
+        vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 5,
+        w: 5 + Math.random() * 6, h: 8 + Math.random() * 8,
+        rot: Math.random() * 6, spin: (Math.random() - 0.5) * 0.4,
+        c: colours[i % colours.length], life: 150 + Math.random() * 60
+      });
+    }
+    if (!confRunning) { confRunning = true; requestAnimationFrame(confLoop); }
+  }
+  function confLoop() {
+    var ctx = conf.getContext("2d");
+    var w = window.innerWidth, h = window.innerHeight;
+    ctx.clearRect(0, 0, w, h);
+    bits = bits.filter(function (p) { return p.life > 0 && p.y < h + 30; });
+    bits.forEach(function (p) {
+      p.vy += 0.22; p.vx *= 0.985;
+      p.x += p.vx; p.y += p.vy; p.rot += p.spin; p.life--;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.min(1, p.life / 40);
+      ctx.fillStyle = p.c;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    if (bits.length) requestAnimationFrame(confLoop);
+    else { confRunning = false; ctx.clearRect(0, 0, w, h); }
+  }
+
+  /* ---------- boot ---------- */
+  var returning = store.code ? unlock(store.code) : null;
+  if (returning) {
+    session = returning;
+    if (store.spun[returning.id]) enterDone(); else enterReady();
+  } else {
+    enterLocked();
+  }
+
+  seedSnow();
+  if (reduce) paintSnow(false); else requestAnimationFrame(snowLoop);
+
+  if (window.ResizeObserver) new ResizeObserver(drawWheel).observe(wheelEl);
+  window.addEventListener("resize", function () {
+    seedSnow();
+    if (reduce) paintSnow(false);
+  });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawWheel);
+})();
+</script>
+</body>
+</html>
